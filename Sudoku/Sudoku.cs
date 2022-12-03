@@ -10,7 +10,7 @@ namespace sudoku
         int blockColumns = 3;
         int numsPerBlock = 9;
 
-        SudokuBlock[,] field;
+        public SudokuBlock[,] field;
         public Sudoku(int[] list)
         {
             field = new SudokuBlock[blockRows, blockColumns];

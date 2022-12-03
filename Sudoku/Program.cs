@@ -8,7 +8,7 @@ namespace sudoku
     {
         static void Main(string[] args)
         {
-            // In the properties of the project, make sure that you always run the projects with 81 ints as an argument (may be that git already did this, but not sure)
+            // In the properties of the project, make sure that you always run the projects with 81 ints as an argument
             // Properties -> Run -> Configurations -> Default -> Fill in 81 ints in the arguments section
             // Can copy paste these:
             // 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0
@@ -37,9 +37,9 @@ namespace sudoku
             {
                 //select relevant blokken for current row
                 int pos = i / 3;
-                SudokuBlok blok1 = current.blokken[pos, 0];
-                SudokuBlok blok2 = current.blokken[pos, 1];
-                SudokuBlok blok3 = current.blokken[pos, 2];
+                SudokuBlock blok1 = current.field[pos, 0];
+                SudokuBlock blok2 = current.field[pos, 1];
+                SudokuBlock blok3 = current.field[pos, 2];
 
                 //intialize array representing current row
                 int[] row = new int[9];
@@ -48,9 +48,9 @@ namespace sudoku
                 pos = i % 3;
                 for(int j = 0; j < 3; j++)
                 {
-                    row[j] = blok1.blok[pos, j];
-                    row[j + 3] = blok2.blok[pos, j];
-                    row[j + 6] = blok3.blok[pos, j];
+                    row[j] = blok1.block[pos, j];
+                    row[j + 3] = blok2.block[pos, j];
+                    row[j + 6] = blok3.block[pos, j];
                 }
 
                 //use binary array to keep track of numbers present in row
@@ -71,9 +71,9 @@ namespace sudoku
             {
                 //select relevant blokken for current column
                 int pos = i / 3;
-                SudokuBlok blok1 = current.blokken[0, pos];
-                SudokuBlok blok2 = current.blokken[1, pos];
-                SudokuBlok blok3 = current.blokken[2, pos];
+                SudokuBlock blok1 = current.field[0, pos];
+                SudokuBlock blok2 = current.field[1, pos];
+                SudokuBlock blok3 = current.field[2, pos];
 
                 //intialize array representing current column
                 int[] col = new int[9];
@@ -82,9 +82,9 @@ namespace sudoku
                 pos = i % 3;
                 for (int j = 0; j < 3; j++)
                 {
-                    col[j] = blok1.blok[j, pos];
-                    col[j + 3] = blok2.blok[j, pos];
-                    col[j + 6] = blok3.blok[j, pos];
+                    col[j] = blok1.block[j, pos];
+                    col[j + 3] = blok2.block[j, pos];
+                    col[j + 6] = blok3.block[j, pos];
                 }
 
                 //use binary array to keep track of numbers present in row
