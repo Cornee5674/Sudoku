@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Reflection.Metadata;
 using sudoku;
 
 namespace sudoku
@@ -60,6 +61,16 @@ namespace sudoku
             
             Console.WriteLine(stringBuild);
         }
+
+        public void genSuccBlock1()
+        {
+            field[0, 0].printEntireBlock();
+            List<SudokuBlock> succesors = field[0, 0].GenerateSuccesors();
+            foreach (SudokuBlock block in succesors)
+            {
+                block.printEntireBlock();
+            }
+        }
     }
 
     public class SudokuBlock
@@ -101,6 +112,11 @@ namespace sudoku
 
             // For every 0, we need to generate a random number, that does not exist yet in this block
             generateRandomNewNumbers(alreadyGenerated);
+        }
+        public SudokuBlock(int[,] field, int[,] mask) //Used to generate new blocks from old ones
+        {
+            this.block = field;
+            this.mask = mask;
         }
 
         private void generateRandomNewNumbers(List<int> alreadyGenerated)
@@ -149,6 +165,54 @@ namespace sudoku
                 }
             }
             return toPrint;
+        }
+
+        public void printEntireBlock()
+        {
+            Console.WriteLine(block[0, 0] + " " + block[0, 1] + " " + block[0, 2]);
+            Console.WriteLine(block[1, 0] + " " + block[1, 1] + " " + block[1, 2]);
+            Console.WriteLine(block[2, 0] + " " + block[2, 1] + " " + block[2, 2]);
+            Console.WriteLine(" ");
+        }
+        public List<SudokuBlock> GenerateSuccesors()
+        {
+            int[,] tempMask = generateBlockWith0();
+            List<SudokuBlock> res = new();
+            for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++)
+                {
+                    if (mask[x, y] == 1) //If this value is locked, continue
+                        continue;
+                    for (int i = 0; i < 3; i++) for (int j = 0; j < 3; j++)
+                        {
+                            if (tempMask[i, j] == 1) continue; //If this value has already been switched with all values, no need to swap again
+                            if (mask[i, j] == 1 || (x == i && y == j)) //if value is locked or it is the same value we are swapping with
+                                continue;
+                            int[,] old = block.Clone() as int[,];
+                            int[,] newBlock = Swap(old, x, y, i, j);
+                            res.Add(new SudokuBlock(newBlock,mask));
+                        }
+                    tempMask[x,y] = 1;
+                }
+            return res;
+        }
+        private int[,] generateBlockWith0()
+        {
+            int[,] res = new int[3, 3];
+            for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++)
+            {
+                    res[x, y] = 0;
+            }
+            return res;
+        }
+        //Swaps 2 values and returns the new block
+        private int[,] Swap(int[,] oldBlock, int x1, int y1, int x2, int y2)
+        {
+            int v1 = oldBlock[x1, y1];
+            int v2 = oldBlock[x2, y2];
+            int[,] res = oldBlock.Clone() as int[,];
+            res[x2, y2] = v1;
+            res[x1, y1] = v2;
+            return res;
         }
     }
 }
