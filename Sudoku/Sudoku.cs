@@ -61,16 +61,6 @@ namespace sudoku
             
             Console.WriteLine(stringBuild);
         }
-
-        public void genSuccBlock1()
-        {
-            field[0, 0].printEntireBlock();
-            List<SudokuBlock> succesors = field[0, 0].GenerateSuccesors();
-            foreach (SudokuBlock block in succesors)
-            {
-                block.printEntireBlock();
-            }
-        }
     }
 
     public class SudokuBlock
@@ -167,34 +157,37 @@ namespace sudoku
             return toPrint;
         }
 
-        public void printEntireBlock()
+        public List<SudokuBlock> GenerateSuccessors()
         {
-            Console.WriteLine(block[0, 0] + " " + block[0, 1] + " " + block[0, 2]);
-            Console.WriteLine(block[1, 0] + " " + block[1, 1] + " " + block[1, 2]);
-            Console.WriteLine(block[2, 0] + " " + block[2, 1] + " " + block[2, 2]);
-            Console.WriteLine(" ");
-        }
-        public List<SudokuBlock> GenerateSuccesors()
-        {
-            int[,] tempMask = generateBlockWith0();
+            //Temp mask is used to keep track of the numbers in a block that have already been checked with all of the other numbers
+            //This will prevent checking duplicate swaps
+            //The mask works exactly the same as the other mask, where 0 is not checked and 1 is already checked
+            int[,] tempMask = generateBlockWith0(); 
             List<SudokuBlock> res = new();
             for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++)
                 {
-                    if (mask[x, y] == 1) //If this value is locked, continue
+                    //If this value is locked, continue
+                    if (mask[x, y] == 1) 
                         continue;
+
                     for (int i = 0; i < 3; i++) for (int j = 0; j < 3; j++)
                         {
-                            if (tempMask[i, j] == 1) continue; //If this value has already been switched with all values, no need to swap again
-                            if (mask[i, j] == 1 || (x == i && y == j)) //if value is locked or it is the same value we are swapping with
-                                continue;
+                            //If this value has already been switched with all values, no need to swap again
+                            if (tempMask[i, j] == 1) continue;
+                            //If target value is locked or it is the same value we are swapping with
+                            if (mask[i, j] == 1 || (x == i && y == j)) continue;
+                            //Once we are sure this swap is valid, we can do the swap and add it to all the possible successor
                             int[,] old = block.Clone() as int[,];
                             int[,] newBlock = Swap(old, x, y, i, j);
                             res.Add(new SudokuBlock(newBlock,mask));
                         }
+                    //After having checked this value with every other number in the block, we can add it to the tempMask
                     tempMask[x,y] = 1;
                 }
             return res;
         }
+
+        //Generates a 3*3 array filled with only 0
         private int[,] generateBlockWith0()
         {
             int[,] res = new int[3, 3];
@@ -204,6 +197,7 @@ namespace sudoku
             }
             return res;
         }
+        
         //Swaps 2 values and returns the new block
         private int[,] Swap(int[,] oldBlock, int x1, int y1, int x2, int y2)
         {
