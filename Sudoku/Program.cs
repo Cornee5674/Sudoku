@@ -26,7 +26,6 @@ namespace sudoku
             {
                 sudoku = new Sudoku(convertToInt(textArgs));
             }
-
             Console.WriteLine(evaluation(sudoku));
             Console.ReadKey();
         }
