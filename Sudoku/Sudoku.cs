@@ -63,7 +63,7 @@ namespace sudoku
             Console.WriteLine(stringBuild);
         }
 
-        public Sudoku generateBestSuccessor(int blockIndex)
+        public (Sudoku, bool) generateBestSuccessor(int blockIndex)
         {
             //Return tuple Yayay :)
             //(Sudoku,Bool) = bool if target is solved sudoku
