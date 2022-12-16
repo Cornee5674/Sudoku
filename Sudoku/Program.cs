@@ -28,6 +28,7 @@ namespace sudoku
             }
 
             Console.WriteLine(evaluation(sudoku));
+            Console.ReadKey();
         }
 
         static int[] convertToInt(string[] args)

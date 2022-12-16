@@ -7,6 +7,7 @@ namespace sudoku
 {
 	public class Sudoku
 	{
+
         int blockRows = 3;
         int blockColumns = 3;
         int numsPerBlock = 9;
@@ -60,6 +61,13 @@ namespace sudoku
             }
             
             Console.WriteLine(stringBuild);
+        }
+
+        public Sudoku generateBestSuccessor(int blockIndex)
+        {
+            //Return tuple Yayay :)
+            //(Sudoku,Bool) = bool if target is solved sudoku
+            //Evaluate will be 0 then
         }
     }
 
