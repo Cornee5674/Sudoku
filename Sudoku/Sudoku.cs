@@ -63,11 +63,105 @@ namespace sudoku
             Console.WriteLine(stringBuild);
         }
 
-        public Sudoku generateBestSuccessor(int blockIndex)
+        public (Sudoku,int) generateBestSuccessor(int blockIndexX, int blockIndexY)
         {
-            //Return tuple Yayay :)
-            //(Sudoku,Bool) = bool if target is solved sudoku
-            //Evaluate will be 0 then
+            List<SudokuBlock> allChildren = field[blockIndexX,blockIndexY].GenerateSuccessors();
+            int currentBestScore = int.MaxValue;
+            Sudoku temp;
+            Sudoku currentBestSudoku = this;
+            for (int i = 0; i < allChildren.Count; i++)
+            {
+                temp = this.copyWithUpdatedBlock(blockIndexX, blockIndexY, allChildren[i]);
+                int score = temp.evaluate();
+                if (score < currentBestScore)
+                {
+                    currentBestScore = score;
+                    currentBestSudoku = temp;
+                }
+                if (currentBestScore == 0) break; //If the sudoku is solved there is no need to continue searching
+            }
+            return (currentBestSudoku, currentBestScore);
+        }
+
+        public Sudoku copyWithUpdatedBlock(int blockIndexX, int blockIndexY, SudokuBlock newBlock) 
+        {
+            Sudoku res = this;
+            res.field[blockIndexX, blockIndexY] = newBlock;
+            return res;
+        }
+
+        public int evaluate()
+        {
+            int score = 0;
+
+            //iterate over rows
+            for (int i = 0; i < 9; i++)
+            {
+                //select relevant blokken for current row
+                int pos = i / 3;
+                SudokuBlock blok1 = field[pos, 0];
+                SudokuBlock blok2 = field[pos, 1];
+                SudokuBlock blok3 = field[pos, 2];
+
+                //intialize array representing current row
+                int[] row = new int[9];
+
+                //fill in current values
+                pos = i % 3;
+                for (int j = 0; j < 3; j++)
+                {
+                    row[j] = blok1.block[pos, j];
+                    row[j + 3] = blok2.block[pos, j];
+                    row[j + 6] = blok3.block[pos, j];
+                }
+
+                //use binary array to keep track of numbers present in row
+                int[] numbers = new int[9] { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+                for (int j = 0; j < 9; j++)
+                {
+                    int number = row[j];
+                    if (numbers[number - 1] == 1)
+                        numbers[number - 1] = 0;
+                }
+
+                //add number of absent numbers to score
+                score += numbers.Sum();
+            }
+
+            //iterate over columns
+            for (int i = 0; i < 9; i++)
+            {
+                //select relevant blokken for current column
+                int pos = i / 3;
+                SudokuBlock blok1 = field[0, pos];
+                SudokuBlock blok2 = field[1, pos];
+                SudokuBlock blok3 = field[2, pos];
+
+                //intialize array representing current column
+                int[] col = new int[9];
+
+                //fill in current values
+                pos = i % 3;
+                for (int j = 0; j < 3; j++)
+                {
+                    col[j] = blok1.block[j, pos];
+                    col[j + 3] = blok2.block[j, pos];
+                    col[j + 6] = blok3.block[j, pos];
+                }
+
+                //use binary array to keep track of numbers present in row
+                int[] numbers = new int[9] { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+                for (int j = 0; j < 9; j++)
+                {
+                    int number = col[j];
+                    if (numbers[number - 1] == 1)
+                        numbers[number - 1] = 0;
+                }
+
+                //add number of absent numbers to score
+                score += numbers.Sum();
+            }
+            return score;
         }
     }
 
