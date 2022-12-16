@@ -66,20 +66,24 @@ namespace sudoku
         public (Sudoku,int) generateBestSuccessor(int blockIndexX, int blockIndexY)
         {
             List<SudokuBlock> allChildren = field[blockIndexX,blockIndexY].GenerateSuccessors();
-            int currentBestScore = int.MaxValue;
+            int currentBestScore = this.evaluate(); ;
             Sudoku temp;
             Sudoku currentBestSudoku = this;
+            List<int> allValues= new List<int>();
             for (int i = 0; i < allChildren.Count; i++)
             {
                 temp = this.copyWithUpdatedBlock(blockIndexX, blockIndexY, allChildren[i]);
                 int score = temp.evaluate();
-                if (score < currentBestScore)
+                allValues.Add(score);
+                if (score <= currentBestScore)
                 {
                     currentBestScore = score;
                     currentBestSudoku = temp;
                 }
                 if (currentBestScore == 0) break; //If the sudoku is solved there is no need to continue searching
             }
+            currentBestSudoku.printSudoku();
+            Console.WriteLine(currentBestScore);
             return (currentBestSudoku, currentBestScore);
         }
 
@@ -162,6 +166,11 @@ namespace sudoku
                 score += numbers.Sum();
             }
             return score;
+        }
+
+        public Sudoku randomWalk()
+        {
+            return this;
         }
     }
 

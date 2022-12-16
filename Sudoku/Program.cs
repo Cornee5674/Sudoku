@@ -28,6 +28,33 @@ namespace sudoku
             }
 
             Console.WriteLine(sudoku.evaluate());
+
+            //MAIN LOOP:
+            int curValue = sudoku.evaluate();
+            int prevValue = curValue;
+            int S = 1;
+            Random rnd = new Random();
+            while (curValue > 0)
+            {
+                //select random block
+                int blockIdxX = rnd.Next(3);
+                int blockIdxY = rnd.Next(3);
+
+                //generate successor and store new evaluation value
+                (sudoku, curValue) = sudoku.generateBestSuccessor(blockIdxX, blockIdxY);
+
+                //check if in local optimum and/or plateau
+                if (curValue <= prevValue)
+                    //perform random walk S times
+                    for (int i = 0; i < S; i++)
+                        sudoku = sudoku.randomWalk();
+
+                prevValue = curValue;
+            }
+
+            Console.WriteLine("Solved!");
+            sudoku.printSudoku();
+
             Console.ReadKey();
         }
 
