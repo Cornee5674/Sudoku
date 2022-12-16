@@ -68,6 +68,7 @@ namespace sudoku
             //Return tuple Yayay :)
             //(Sudoku,Bool) = bool if target is solved sudoku
             //Evaluate will be 0 then
+            return (this, true);
         }
     }
 
