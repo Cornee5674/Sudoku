@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace sudoku
 {
@@ -8,14 +9,7 @@ namespace sudoku
     {
         static void Main(string[] args)
         {
-            // In the properties of the project, make sure that you always run the projects with 81 ints as an argument
-            // Properties -> Run -> Configurations -> Default -> Fill in 81 ints in the arguments section
-            // Can copy paste these:
-            // 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0
-            // You can also run the application from the command line and just fill in the 81 ints from there
-            //
-            // Alternatively, you can now copy and paste the 81 ints into the Arguments.txt file. Just make sure to right click this file, and
-            // choose quick properties, and select copy to output directory.
+            // Creating the Sudoku
             string text = File.ReadAllText("Arguments.txt");
             string[] textArgs = text.Split(" ");
             Sudoku sudoku;
@@ -26,119 +20,111 @@ namespace sudoku
             {
                 sudoku = new Sudoku(convertToInt(textArgs));
             }
-            Console.WriteLine(evaluation(sudoku));
-            Console.ReadKey();
+            Console.WriteLine("Evaluation of unsolved sudoku: " + sudoku.evaluate());
+            Console.WriteLine("\n");
 
+            // Starting stopwatch for time measurement
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            // Solve the sudoku
+            Sudoku solvedSudoku = SolveSudoku(sudoku);
+
+            // Printint elapsed time
+            stopWatch.Stop();
+            Console.WriteLine("Milliseconds elapsed: " + stopWatch.ElapsedMilliseconds);
+            Console.ReadKey();
+        }
+
+        static Sudoku SolveSudoku(Sudoku sudoku)
+        {
             //MAIN LOOP:
-            int curValue = evaluation(sudoku);
-            int prevValue = curValue;
-            int S = 1;
+            Sudoku toSolve = sudoku;
+            int curValue = toSolve.evaluate();
+            int lowestFound = curValue;
+
+            int totalSteps = 0;
+            int totalRandomWalks = 0;
+
+            int lowestUntilNow = curValue;
+            int lowestAllTime = curValue;
+            int amountOfTimesNotLower = 0;
+            int whenToApplyRandomWalk = 100;
+
+            int S = 2;
             Random rnd = new Random();
-            while (curValue > 0)
+            while (curValue > 0 )
             {
                 //select random block
                 int blockIdxX = rnd.Next(3);
                 int blockIdxY = rnd.Next(3);
 
                 //generate successor and store new evaluation value
-                (sudoku, curValue) = sudoku.generateBestSuccessor(blockIdxX, blockIdxY);
+                toSolve = sudoku.generateBestSuccessor(blockIdxX, blockIdxY, curValue);
+                curValue = toSolve.evaluate();
 
-                //check if in local optimum and/or plateau
-                if (curValue <= prevValue)
-                    //perform random walk S times
-                    for (int i = 0; i < S; i++)
-                        sudoku = sudoku.randomWalk();
+                if (curValue < lowestAllTime) lowestAllTime = curValue;
 
-                prevValue = curValue;
+                //check if in local optimum and / or plateau
+                if (curValue < lowestUntilNow)
+                {
+                    lowestUntilNow = curValue;
+                    amountOfTimesNotLower = 0;
+                }
+                else
+                {
+                    // If our current value stayed the s ame, we increment amountOfTimesNotLower
+                    // If this value hits a certain threshold, meaning we stagnated,
+                    // We do the randomwalk an S amount of times.
+                    amountOfTimesNotLower++;
+                    if (amountOfTimesNotLower == whenToApplyRandomWalk)
+                    {
+                        toSolve = randomWalk(toSolve, S);
+                        totalRandomWalks++;
+                        amountOfTimesNotLower = 0;                    
+                        curValue = toSolve.evaluate();
+                        lowestUntilNow = curValue;
+                    }
+                }
+
+                totalSteps++;
             }
+            Console.WriteLine("Solved sudoku: ");
+            toSolve.printSudoku();
+            Console.WriteLine("Random walks: " + totalRandomWalks);
+            Console.WriteLine("Total steps: " + totalSteps);
+            Console.WriteLine("Evaluation of solved sudoku: " + curValue);
+            return toSolve;
+        }
 
-            Console.WriteLine("Solved!");
-            sudoku.printSudoku();
+        static Sudoku randomWalk(Sudoku sudoku, int howManyTimes)
+        {
+            Random rnd = new Random();
+            Sudoku s = sudoku;
+            int timesDone = 0;
+            // We choose a random next state an howManyTimes amount. We dont use the function getbestsuccessor since we want to choose randomly,
+            // And not based on evaluation function
+            while (timesDone != howManyTimes)
+            {
+                int blockX = rnd.Next(3);
+                int blockY = rnd.Next(3);
+                List<SudokuBlock> tmpList = s.generateChildren(blockX, blockY);
+                int indexToChoose = rnd.Next(tmpList.Count);
+                s = s.copyWithUpdatedBlock(blockX, blockY, tmpList[indexToChoose]);
+                timesDone++;
+            }
+            return s;
         }
 
         static int[] convertToInt(string[] args)
         {
+            // Helper function to convert a list of strings to a list of ints
             int[] toInts = new int[args.Length];
             for (int i = 0; i < args.Length; i++)
             {
                 toInts[i] = int.Parse(args[i]);
             }
             return toInts;
-        }
-            
-
-        public static int evaluation(Sudoku current)
-        {
-            int score = 0;
-
-            //iterate over rows
-            for(int i = 0; i < 9; i++)
-            {
-                //select relevant blokken for current row
-                int pos = i / 3;
-                SudokuBlock blok1 = current.field[pos, 0];
-                SudokuBlock blok2 = current.field[pos, 1];
-                SudokuBlock blok3 = current.field[pos, 2];
-
-                //intialize array representing current row
-                int[] row = new int[9];
-
-                //fill in current values
-                pos = i % 3;
-                for(int j = 0; j < 3; j++)
-                {
-                    row[j] = blok1.block[pos, j];
-                    row[j + 3] = blok2.block[pos, j];
-                    row[j + 6] = blok3.block[pos, j];
-                }
-
-                //use binary array to keep track of numbers present in row
-                int[] numbers = new int[9] {1,1,1,1,1,1,1,1,1};
-                for(int j = 0; j < 9; j++)
-                {
-                    int number = row[j];
-                    if (numbers[number - 1] == 1)
-                        numbers[number - 1] = 0;
-                }
-
-                //add number of absent numbers to score
-                score += numbers.Sum();
-            }
-
-            //iterate over columns
-            for (int i = 0; i < 9; i++)
-            {
-                //select relevant blokken for current column
-                int pos = i / 3;
-                SudokuBlock blok1 = current.field[0, pos];
-                SudokuBlock blok2 = current.field[1, pos];
-                SudokuBlock blok3 = current.field[2, pos];
-
-                //intialize array representing current column
-                int[] col = new int[9];
-
-                //fill in current values
-                pos = i % 3;
-                for (int j = 0; j < 3; j++)
-                {
-                    col[j] = blok1.block[j, pos];
-                    col[j + 3] = blok2.block[j, pos];
-                    col[j + 6] = blok3.block[j, pos];
-                }
-
-                //use binary array to keep track of numbers present in row
-                int[] numbers = new int[9] { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-                for (int j = 0; j < 9; j++)
-                {
-                    int number = col[j];
-                    if (numbers[number - 1] == 1)
-                        numbers[number - 1] = 0;
-                }
-
-                //add number of absent numbers to score
-                score += numbers.Sum();
-            }
-            return score;
-        }
+        }     
     }
 }

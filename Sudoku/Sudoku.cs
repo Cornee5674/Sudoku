@@ -13,28 +13,46 @@ namespace sudoku
         int numsPerBlock = 9;
 
         public SudokuBlock[,] field;
+
         public Sudoku(int[] list)
         {
+            // We create a new empty sudokublock for every row and column
             field = new SudokuBlock[blockRows, blockColumns];
-            // We get 81 ints, these are placed into blocks of 9 ints
-            // n keeps track of the current block
-            int n = 0;
-            for (int i = 0; i < blockRows; i++)
+            for (int i = 0; i < 3; i++)
             {
-                for (int j = 0; j < blockColumns; j++)
+                for (int j = 0; j < 3; j++)
                 {
-                    // We generate a new temporary array with the next 9 ints in the given array
-                    int[] temp = new int[9];
-                    for (int x = 0; x < numsPerBlock; x++)
-                    {
-                        temp[x] = list[x + (numsPerBlock * n)];
-                    }
-                    n++;
-                    field[i, j] = new SudokuBlock(temp);
+                    field[i, j] = new SudokuBlock();
                 }
             }
-
+            // We initialise the values in the sudokublocks using the read intlist
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    for (int row = 0; row < 3; row++)
+                    {
+                        field[i, j].block[row, 0] = list[((row * 9) + (j * 3)) + (i * 27)];
+                        field[i, j].block[row, 1] = list[(((row * 9) + 1) + (j * 3)) + (i * 27)];
+                        field[i, j].block[row, 2] = list[(((row * 9) + 2) + (j * 3)) + (i * 27)];
+                    }
+                }
+            }
+            Console.WriteLine("Empty sudoku: ");
             printSudoku();
+            // After specifying the fixed numbers, we generate the random ones.
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    field[i, j].generateRandomNewNumbers();
+                }
+            }
+        }
+
+        public Sudoku(SudokuBlock[,] fields)
+        {
+            field = fields;
         }
 
         public void printSudoku()
@@ -63,12 +81,117 @@ namespace sudoku
             Console.WriteLine(stringBuild);
         }
 
-        public (Sudoku, int) generateBestSuccessor(int blockIndexX, int blockIndexY)
+        public List<SudokuBlock> generateChildren(int blockIndexX, int blockIndexY)
         {
-            //Return tuple Yayay :)
-            //(Sudoku,Bool) = bool if target is solved sudoku
-            //Evaluate will be 0 then
-            return (this, 1);
+            return field[blockIndexX, blockIndexY].GenerateSuccessors();
+        }
+
+        public Sudoku generateBestSuccessor(int blockIndexX, int blockIndexY, int lowestFound)
+        {
+            // Using the list of generated children
+            List<SudokuBlock> allChildren = generateChildren(blockIndexX, blockIndexY);
+            int currentBestScore = int.MaxValue;
+            int indexChildren = 0;
+            Sudoku tempSudoku;
+
+            // We loop over this list, and check if the sudoku with this new childBlock has a better evaluation
+            for (int i = 0; i < allChildren.Count; i++)
+            {
+                tempSudoku = copyWithUpdatedBlock(blockIndexX, blockIndexY, allChildren[i]);
+                int score = tempSudoku.evaluate();
+                // If so, we store the index of this block in the list
+                if (score < currentBestScore)
+                {
+                    currentBestScore = score;
+                    indexChildren = i;
+                }
+            }
+            // We return the sudoku with the lowest evaluation score
+            // Note that the the unchanged sudoku is in the children list, so no check is required to see if it should remain unchanged.
+            Sudoku newS = copyWithUpdatedBlock(blockIndexX, blockIndexY, allChildren[indexChildren]);
+            return newS;
+        }
+
+        public Sudoku copyWithUpdatedBlock(int blockIndexX, int blockIndexY, SudokuBlock newBlock)
+        {
+            // Update the sudoku with the provided block
+            Sudoku res = this;
+            res.field[blockIndexX, blockIndexY] = newBlock;
+            return res;
+        }
+
+        public int evaluate()
+        {
+            int score = 0;
+
+            //iterate over rows
+            for (int i = 0; i < 9; i++)
+            {
+                //select relevant blokken for current row
+                int pos = i / 3;
+                SudokuBlock blok1 = field[pos, 0];
+                SudokuBlock blok2 = field[pos, 1];
+                SudokuBlock blok3 = field[pos, 2];
+
+                //intialize array representing current row
+                int[] row = new int[9];
+
+                //fill in current values
+                pos = i % 3;
+                for (int j = 0; j < 3; j++)
+                {
+                    row[j] = blok1.block[pos, j];
+                    row[j + 3] = blok2.block[pos, j];
+                    row[j + 6] = blok3.block[pos, j];
+                }
+
+                //use binary array to keep track of numbers present in row
+                int[] numbers = new int[9] { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+                for (int j = 0; j < 9; j++)
+                {
+                    int number = row[j];
+                    if (numbers[number - 1] == 1)
+                        numbers[number - 1] = 0;
+                }
+
+                //add number of absent numbers to score
+                score += numbers.Sum();
+            }
+
+            //iterate over columns
+            for (int i = 0; i < 9; i++)
+            {
+                //select relevant blokken for current column
+                int pos = i / 3;
+                SudokuBlock blok1 = field[0, pos];
+                SudokuBlock blok2 = field[1, pos];
+                SudokuBlock blok3 = field[2, pos];
+
+                //intialize array representing current column
+                int[] col = new int[9];
+
+                //fill in current values
+                pos = i % 3;
+                for (int j = 0; j < 3; j++)
+                {
+                    col[j] = blok1.block[j, pos];
+                    col[j + 3] = blok2.block[j, pos];
+                    col[j + 6] = blok3.block[j, pos];
+                }
+
+                //use binary array to keep track of numbers present in row
+                int[] numbers = new int[9] { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+                for (int j = 0; j < 9; j++)
+                {
+                    int number = col[j];
+                    if (numbers[number - 1] == 1)
+                        numbers[number - 1] = 0;
+                }
+
+                //add number of absent numbers to score
+                score += numbers.Sum();
+            }
+            return score;
         }
     }
 
@@ -81,45 +204,45 @@ namespace sudoku
         int[,] mask;
         Random rnd;
 
-        public SudokuBlock(int[] ints)
+        public SudokuBlock()
         {
             block = new int[rows, columns];
             mask = new int[rows, columns];
             rnd = new Random();
-            // This list keeps track of all the numbers that are already placed in the block
-            List<int> alreadyGenerated = new List<int>();
 
-            // We get an array of 9 ints, these are placed in the 2dimensional array blok
-            // n keeps track of where in the given int list we are
-            int n = 0;
-            for (int i = 0; i < 3; i ++)
+            // Creating of all the initial values in this block
+            for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    // Setting the mask to either 0 or 1, depending on if the int given is 0
-                    if (ints[n] == 0) mask[i, j] = 0;
-                    else
-                    {
-                        // Adding the number to the numbers list if it is locked
-                        alreadyGenerated.Add(ints[n]);
-                        mask[i, j] = 1;
-                    }
-                    block[i, j] = ints[n];
-                    n++;
+                    block[i, j] = 0;
+                    mask[i, j] = 0;
                 }
             }
-
-            // For every 0, we need to generate a random number, that does not exist yet in this block
-            generateRandomNewNumbers(alreadyGenerated);
         }
+
         public SudokuBlock(int[,] field, int[,] mask) //Used to generate new blocks from old ones
         {
             this.block = field;
             this.mask = mask;
         }
 
-        private void generateRandomNewNumbers(List<int> alreadyGenerated)
+        public void generateRandomNewNumbers()
         {
+            // We make a list of values already present in this block and set the mask to 1 if a values is found
+            List<int> alreadyPresent = new List<int>();
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (block[i, j] != 0)
+                    {
+                        alreadyPresent.Add(block[i, j]);
+                        mask[i, j] = 1;
+                    }
+                }
+            }
+
             // Generate a new random number if the mask is set to 0 at that position
             for (int i = 0; i < rows; i++)
             {
@@ -127,7 +250,7 @@ namespace sudoku
                 {
                     if (mask[i, j] == 0)
                     {
-                        block[i, j] = getNewRnd(alreadyGenerated);
+                        block[i, j] = getNewRnd(alreadyPresent);
                     }
                 }
             }
@@ -154,6 +277,7 @@ namespace sudoku
 
         internal string printBlock(int row)
         {
+            // Debug printer function
             string toPrint = "|| ";
             for (int i = 0; i < columns; i++)
             {
@@ -164,6 +288,17 @@ namespace sudoku
                 }
             }
             return toPrint;
+        }
+
+        public void printBlock()
+        {
+            // Debug printer function
+            string wholeString = "";
+            for (int i = 0; i < 3; i++)
+            {
+                wholeString += printBlock(i) + "\n";
+            }
+            Console.WriteLine(wholeString);
         }
 
         public List<SudokuBlock> GenerateSuccessors()
@@ -193,6 +328,7 @@ namespace sudoku
                     //After having checked this value with every other number in the block, we can add it to the tempMask
                     tempMask[x,y] = 1;
                 }
+            res.Add(this);
             return res;
         }
 
