@@ -14,7 +14,7 @@ namespace sudoku
 
         public SudokuBlock[,] field;
 
-        public Sudoku(int[] list)
+        public Sudoku(int[] list, bool print)
         {
             // We create a new empty sudokublock for every row and column
             field = new SudokuBlock[blockRows, blockColumns];
@@ -38,8 +38,11 @@ namespace sudoku
                     }
                 }
             }
-            Console.WriteLine("Empty sudoku: ");
-            printSudoku();
+            if (print)
+            {
+                Console.WriteLine("Empty sudoku: ");
+                printSudoku();
+            }
             // After specifying the fixed numbers, we generate the random ones.
             for (int i = 0; i < 3; i++)
             {
@@ -79,6 +82,11 @@ namespace sudoku
             }
             
             Console.WriteLine(stringBuild);
+        }
+
+        public Sudoku Clone()
+        {
+            return (Sudoku) MemberwiseClone();
         }
 
         public List<SudokuBlock> generateChildren(int blockIndexX, int blockIndexY)

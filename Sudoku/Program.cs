@@ -9,34 +9,83 @@ namespace sudoku
     {
         static void Main(string[] args)
         {
+            // Roep Solve aan om de gegeven sudoku op te lossen
+            Solve(args);
+            // Roep TimeSudoku aan om de snelheid van de gegeven sudoku te testen met meerdere S waardes
+            //TimeSudoku(args);
+        }
+
+        static Sudoku createSudoku(string[] args, bool print)
+        {
             // Creating the Sudoku
             string text = File.ReadAllText("Arguments.txt");
             string[] textArgs = text.Split(" ");
             Sudoku sudoku;
             if (args.Length > 0)
             {
-                sudoku = new Sudoku(convertToInt(args));
-            }else
-            {
-                sudoku = new Sudoku(convertToInt(textArgs));
+                sudoku = new Sudoku(convertToInt(args), print);
             }
+            else
+            {
+                sudoku = new Sudoku(convertToInt(textArgs), print);
+            }
+            return sudoku;
+        }
+
+        static void TimeSudoku(string[] args)
+        {
+            int timesToRun = 50;
+            int[] sToTest = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 50, 100, 500};
+            long[] averageResults = new long[sToTest.Length];
+
+            for (int i = 0; i < sToTest.Length; i++)
+            {
+                int n = 0;
+                long[] theseTestResults = new long[timesToRun];
+                while (n < timesToRun)
+                {
+                    Sudoku tempSudoku = createSudoku(args, false);
+                    var stopWatch = new Stopwatch();
+                    stopWatch.Start();
+                    Sudoku newSudoku = SolveSudoku(tempSudoku, sToTest[i], false);
+                    stopWatch.Stop();
+                    theseTestResults[n] = stopWatch.ElapsedMilliseconds;
+                    n++;
+                }
+                long sum = theseTestResults.Sum();
+                long average = sum / timesToRun;
+                averageResults[i] = average;
+                Console.WriteLine("Testing the algorithm " + timesToRun + " times with S as " + sToTest[i] + " done.");
+            }
+            Console.WriteLine("Results:");
+            for (int i = 0; i < averageResults.Length; i++)
+            {
+                Console.WriteLine("With S as " + sToTest[i] + ": " + averageResults[i] + " milliseconds on average");
+            }
+            Console.ReadKey();
+        }
+
+        static void Solve(string[] args)
+        {
+            Sudoku sudoku = createSudoku(args, true);
             Console.WriteLine("Evaluation of unsolved sudoku: " + sudoku.evaluate());
             Console.WriteLine("\n");
-
             // Starting stopwatch for time measurement
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
             // Solve the sudoku
-            Sudoku solvedSudoku = SolveSudoku(sudoku);
+            int S = 10;
+            Sudoku solvedSudoku = SolveSudoku(sudoku, S, true);
 
             // Printint elapsed time
             stopWatch.Stop();
             Console.WriteLine("Milliseconds elapsed: " + stopWatch.ElapsedMilliseconds);
             Console.ReadKey();
+            
         }
 
-        static Sudoku SolveSudoku(Sudoku sudoku)
+        static Sudoku SolveSudoku(Sudoku sudoku, int S, bool print)
         {
             //MAIN LOOP:
             Sudoku toSolve = sudoku;
@@ -51,7 +100,6 @@ namespace sudoku
             int amountOfTimesNotLower = 0;
             int whenToApplyRandomWalk = 100;
 
-            int S = 2;
             Random rnd = new Random();
             while (curValue > 0 )
             {
@@ -89,11 +137,14 @@ namespace sudoku
 
                 totalSteps++;
             }
-            Console.WriteLine("Solved sudoku: ");
-            toSolve.printSudoku();
-            Console.WriteLine("Random walks: " + totalRandomWalks);
-            Console.WriteLine("Total steps: " + totalSteps);
-            Console.WriteLine("Evaluation of solved sudoku: " + curValue);
+            if (print)
+            {
+                Console.WriteLine("Solved sudoku: ");
+                toSolve.printSudoku();
+                Console.WriteLine("Random walks: " + totalRandomWalks);
+                Console.WriteLine("Total steps: " + totalSteps);
+                Console.WriteLine("Evaluation of solved sudoku: " + curValue);
+            }          
             return toSolve;
         }
 
