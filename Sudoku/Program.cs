@@ -98,7 +98,7 @@ namespace sudoku
             int lowestUntilNow = curValue;
             int lowestAllTime = curValue;
             int amountOfTimesNotLower = 0;
-            int whenToApplyRandomWalk = 100;
+            int whenToApplyRandomWalk = 50;
 
             Random rnd = new Random();
             while (curValue > 0 )
